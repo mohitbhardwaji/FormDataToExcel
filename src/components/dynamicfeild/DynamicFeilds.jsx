@@ -14,7 +14,7 @@ const DynamicFields = ({ deviceType, additionalFields, handleAdditionalFieldChan
           className="p-2 border rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4 mr-4"
         />
       ));
-    case "Network Switch":
+    case "NetworkSwitch":
       return NetworkSwitch.map((field) => (
         <input
           key={field}

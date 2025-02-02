@@ -3,7 +3,7 @@ import DynamicFields from "../dynamicfeild/DynamicFeilds";
 import { CCTV, Genetec, NetworkSwitch, NVR, projectType, RFDevice, sheetName, WorkStation } from "../../constants/constants";
 import { X } from "lucide-react"; // Importing the Lucide React icon
 // import DownloadButton from "../button/DownloadButton";
-import * as XLSX from "xlsx"; 
+import * as XLSX from "xlsx";
 
 const Form = ({ onAddData }) => {
   const [formData, setFormData] = useState({
@@ -65,68 +65,64 @@ const Form = ({ onAddData }) => {
     e.preventDefault();
     console.log(formData);
   
-    // Create an object to store sheets
-    const sheetsData = {};
+    const headers = { CCTV, NetworkSwitch, WorkStation, RFDevice, Genetec, NVR };
+    const sheetsData = {}; // Store sheets with headers
   
-    // Map headers to device types
-    const headers = {
-      CCTV,
-      NetworkSwitch,
-      WorkStation,
-      RFDevice,
-      Genetec,
-      NVR
-    };
+    // **Step 1: Initialize all sheets with only headers**
+    Object.keys(headers).forEach((sheetName) => {
+      sheetsData[sheetName] = [headers[sheetName]]; // Start each sheet with headers
+    });
   
-    // Loop through the device sections and add data to the respective sheets
+    // **Step 2: Map device data into the sheets**
     formData.deviceSections.forEach((device) => {
-      if (device.deviceType) {
-        if (!sheetsData[device.deviceType]) {
-          sheetsData[device.deviceType] = [];
-        }
-  
-        // Get the headers based on the deviceType
-        const sheetHeaders = headers[device.deviceType] || [];
-  
-        // Create a row of data matching the headers
-        const rowData = sheetHeaders.reduce((acc, header) => {
-          acc[header] = device.additionalFields[header] || "";
-          return acc;
-        }, {});
-  
-        // // Add siteName and pmInstallation to the row
-        // rowData["siteName"] = formData.siteName;
-        // rowData["pmInstallation"] = formData.pmInstallation;
-  
-        // Push the row data to the corresponding deviceType sheet
+      if (device.deviceType && sheetsData[device.deviceType]) {
+        const sheetHeaders = headers[device.deviceType];
+        const rowData = sheetHeaders.map((header) => device.additionalFields[header] || "");
         sheetsData[device.deviceType].push(rowData);
       }
     });
   
-    // Convert sheetsData to an Excel file
     const wb = XLSX.utils.book_new();
   
-    // Add each sheet to the workbook
+    // **Step 3: Convert sheetsData into Excel sheets with styling**
     Object.keys(sheetsData).forEach((sheetName) => {
-      const ws = XLSX.utils.json_to_sheet(sheetsData[sheetName], { header: headers[sheetName] });
+      const ws = XLSX.utils.aoa_to_sheet(sheetsData[sheetName]);
+  
+      // Set column width for better readability
+      ws["!cols"] = headers[sheetName].map(() => ({ wch: 20 }));
+  
+      // Style header row
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+  
+        if (!ws[cellAddress]) continue;
+  
+        ws[cellAddress].s = {
+          font: { bold: true, sz: 16, color: { rgb: "000000" } }, // Bold, large text
+          fill: { patternType: 'solid', fgColor: { rgb: "ADD8E6" } }, // Light blue background
+          alignment: { horizontal: "center", vertical: "center" },
+        };
+      }
+  
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     });
   
-    // Write the workbook to a file
-    XLSX.writeFile(wb, `${formData.siteName ? formData.siteName+'.xlsx' : "site_data.xlsx"}`);
+    // **Step 4: Generate the Excel file**
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}_${(currentDate.getMonth() + 1).toString().padStart(2, '0')}_${currentDate.getFullYear()}`;
+    const fileName = formData.siteName ? `${formData.siteName}_${formData.pmInstallation}_Inventory_${formattedDate}.xlsx` : `site_data_${formattedDate}.xlsx`;
   
-    // onAddData(formData);
+    XLSX.writeFile(wb, fileName);
+  
+    // Reset form data
     setFormData({
       siteName: "",
       pmInstallation: "",
-      deviceSections: [
-        {
-          deviceType: "",
-          additionalFields: {},
-        },
-      ],
+      deviceSections: [{ deviceType: "", additionalFields: {} }],
     });
   };
+  
 
   return (
     <div className="bg-gray-900 text-white shadow-lg p-6 rounded-lg w-[90%] max-w-4xl mx-auto space-y-6">
@@ -200,7 +196,7 @@ const Form = ({ onAddData }) => {
               type="button"
               onClick={() => handleRemoveDeviceSection(index)}
               className="absolute top-2 right-2 text-white p-1 hover:text-red-600 rounded-full"
-              style={{backgroundColor:"#1E2939"}}
+              style={{ backgroundColor: "#1E2939" }}
             >
               <X size={16} />
             </button>
@@ -212,7 +208,7 @@ const Form = ({ onAddData }) => {
         type="button"
         onClick={handleAddDeviceSection}
         className="w-full bg-blue-700 text-white p-2 rounded mt-4"
-        style={{backgroundColor:"#1E2939"}}
+        style={{ backgroundColor: "#1E2939" }}
       >
         Add Another Device
       </button>
@@ -221,7 +217,7 @@ const Form = ({ onAddData }) => {
         type="submit"
         onClick={handleSubmit}
         className="w-full bg-blue-900 text-white p-2 rounded mt-4"
-        style={{backgroundColor:"#2B7FFF"}}
+        style={{ backgroundColor: "#2B7FFF" }}
       >
         Download File
       </button>

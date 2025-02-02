@@ -1,6 +1,6 @@
 export const projectType = ["Project Type","PM","Installation"]
 
-export const sheetName = ["Data Type","CCTV","Network Switch","WorkStation","RF Device","Genetec","NVR"]
+export const sheetName = ["Data Type","CCTV","NetworkSwitch","WorkStation","RF Device","Genetec","NVR"]
 
 export const CCTV = [
     "siteName", "department", "make", "model", "cctvType", "camerasLocation",
